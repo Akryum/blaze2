@@ -1,0 +1,62 @@
+<head>
+  <title>blaze2</title>
+</head>
+
+<body>
+  <h1>Welcome to Meteor!</h1>
+
+  <!-- Template inclusion -->
+  {{> hello}}
+  {{> info}}
+  <!-- Custom tags -->
+  <message></message>
+  <condition></condition>
+  <todos></todos>
+</body>
+
+<template name="hello">
+  <!-- Inline event listeners -->
+  <button @click="incrementCounter">Click Me</button>
+  <p>You've pressed the button {{counter}} times.</p>
+</template>
+
+<template name="info">
+  <h2>Learn Meteor!</h2>
+  <ul>
+    <li><a href="https://www.meteor.com/try" target="_blank">Do the Tutorial</a></li>
+    <li><a href="http://guide.meteor.com" target="_blank">Follow the Guide</a></li>
+    <li><a href="https://docs.meteor.com" target="_blank">Read the Docs</a></li>
+    <li><a href="https://forums.meteor.com" target="_blank">Discussions</a></li>
+  </ul>
+</template>
+
+<template name="message">
+  <!-- Directives with two-way data-binding ('$model') -->
+  <input $model="msg" placeholder="Enter a message" />
+  <h3>{{ msg }}</h3>
+</template>
+
+<template name="condition">
+  <!-- JavaScript expressions -->
+  <button @click="show = !show">{{ show ? 'Hide' : 'Show' }}</button>
+  {{#if show}}
+  <h3>I'm awesome!</h3>
+  {{/if}}
+
+  <!-- Directives -->
+  <h4 $if="show">Hey! Me too!</h4>
+</template>
+
+<template name="todos">
+  <div class="todos">
+    <!-- Advanced event listeners with modifiers -->
+    <input $model="newTxt" placeholder="Enter new task" @keyup.enter="addTask" />
+    <ul>
+      <!-- Loop -->
+      {{#each tasks}}
+      <!-- Calling template methods with arguments from event listeners -->
+      <li>{{task.text}} <button @click="removeTask(task._id)">x</button></li>
+      {{/each}}
+    </ul>
+  </div>
+</template>
