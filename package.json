@@ -6,7 +6,8 @@
   },
   "dependencies": {
     "meteor-node-stubs": "~0.2.0",
-    "vue": "^2.0.3"
+    "vue": "^2.0.3",
+    "vue-meteor-tracker": "1.0.2"
   },
   "devDependencies": {}
 }

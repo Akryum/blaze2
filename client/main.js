@@ -3,9 +3,13 @@ import { ReactiveVar } from 'meteor/reactive-var';
 
 import './main.html';
 
-Template.hello.onCreated(function () {
+Template.hello.onCreated(function() {
   // counter starts at 0
   this.counter = new ReactiveVar(0);
+});
+
+Template.hello.onRendered(function() {
+  console.log('rendered');
 });
 
 Template.hello.helpers({
@@ -42,6 +46,10 @@ Template.condition.onCreated(function() {
   this.defineState({
     show: false,
   });
+});
+
+Template.destroyable.onDestroyed(function() {
+  console.log('destroyed');
 });
 
 // Todos

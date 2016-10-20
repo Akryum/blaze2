@@ -44,11 +44,15 @@
   <!-- JavaScript expressions -->
   <button @click="show = !show">{{ show ? 'Hide' : 'Show' }}</button>
   {{#if show}}
-  <h3>I'm awesome!</h3>
+  {{> destroyable}}
   {{/if}}
 
   <!-- Directives -->
   <h4 $if="show">Hey! Me too!</h4>
+</template>
+
+<template name="destroyable">
+  <h3>I'm awesome!</h3>
 </template>
 
 <template name="todos">

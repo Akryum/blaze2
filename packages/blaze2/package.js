@@ -14,7 +14,3 @@ Package.onUse(function(api) {
   api.mainModule('blaze2.js', 'client');
   api.export(['Blaze', 'Template']);
 });
-
-Npm.depends({
-  'vue-meteor-tracker': '1.0.2',
-});
