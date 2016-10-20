@@ -104,7 +104,9 @@ class VueHtmlTagHandler {
 
   transformBlazeToVueTemplate(blazeTemplate) {
     let vueTemplate = blazeTemplate;
-    vueTemplate = vueTemplate.replace(/{{>\s*([\w\d-]+)}}/gi, '<$1></$1>')
+    vueTemplate = vueTemplate
+    .replace(/{{{(.*?)}}}/gi, '<span v-html="$1"></span>')
+    .replace(/{{>\s*([\w\d-]+)}}/gi, '<$1></$1>')
     .replace(/\$([\w-]+)/gi, 'v-$1')
     .replace(/{{#\s*(if|show)\s+(.+)}}/gi, '<template v-$1="$2">')
     .replace(/{{else}}/gi, '</template><template v-else>')
@@ -115,7 +117,19 @@ class VueHtmlTagHandler {
       }
       return '<template v-for="' + expression + '">';
     })
-    .replace(/{{\/(if|show|each)}}/gi, '</template>');
+    .replace(/{{\/(if|show|each)}}/gi, '</template>')
+    .replace(/(\@|v-|:)?([\w.-]+)="(.*?)"/gi, (match, p1, p2, p3) => {
+      if(p1 !== undefined || (p3.indexOf('{{') === -1 && p3.indexOf('}}') === -1)) {
+        return match;
+      } else {
+        const simple = /^{{(.*?)}}$/gi.exec(p3);
+        if(simple !== null) {
+          return `:${p2}="${simple[1]}"`;
+        } else {
+          return `:${p2}="'${p3.replace(/{{(.*?)}}/gi, `' + String($1) + '`)}'"`;
+        }
+      }
+    });
     vueTemplate = '<span>' + vueTemplate + '</span>';
     return vueTemplate;
   }

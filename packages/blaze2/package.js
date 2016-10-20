@@ -9,8 +9,12 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.4.2-rc.0');
   api.use('ecmascript');
+  api.use('akryum:npm-check@0.0.2');
   api.imply('akryum:blaze2-compiler@0.0.1');
-  api.use('akryum:vue@1.2.0');
   api.mainModule('blaze2.js', 'client');
   api.export(['Blaze', 'Template']);
+});
+
+Npm.depends({
+  'vue-meteor-tracker': '1.0.2',
 });

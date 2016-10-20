@@ -1,6 +1,10 @@
 import { Meteor } from 'meteor/meteor';
 import Vue from 'vue';
-//window.Vue = Vue;
+import VueMeteor from 'vue-meteor-tracker';
+
+Vue.use(VueMeteor, {
+  freeze: true,
+});
 
 export const Blaze = {};
 export const Template = {};
@@ -21,20 +25,14 @@ Blaze.registerTemplate = function(name, def) {
 
   options.beforeCreate = function() {
     this.state = {
-      $data: this,
+      $state: this,
       $component: this,
-      defineData: (map) => {
+      defineState: (map) => {
         for(const k in map) {
           Vue.util.defineReactive(this, k, map[k]);
         }
       },
     };
-
-    /*Object.defineProperty(this.state, '$data', {
-      get:() => {
-        return this.$data;
-      },
-    });*/
 
     if(options.methods) {
       for(const k in options.methods) {
@@ -45,6 +43,8 @@ Blaze.registerTemplate = function(name, def) {
 
   Template[name] = {
     name,
+    componentDefinition: options,
+    // Hooks
     onCreated(callback) {
       const bc = options.beforeCreate;
       options.beforeCreate = function() {
@@ -52,24 +52,63 @@ Blaze.registerTemplate = function(name, def) {
         return callback.bind(this.state)();
       };
     },
-    helpers(map) {
+    onDestroyed(callback) {
+      const bc = options.destroyed;
+      options.destroyed = function() {
+        bc.bind(this)();
+        return callback.bind(this.state)();
+      };
+    },
+    // Options
+    subscribe(map) {
       if(!options.meteor) {
         options.meteor = {};
       }
+      if(!options.meteor.subscribe) {
+        options.meteor.subscribe = {};
+      }
       for(const k in map) {
-        options.meteor[k] = function() {
-          return map[k].bind(this.state)();
-        };
+        let option = map[k];
+        let result = option;
+        if(typeof result === 'function') {
+          result = function() {
+            return option.bind(this.state)();
+          };
+        }
+        options.meteor.subscribe[k] = result;
+      }
+    },
+    helpers(map) {
+      // TODO Need to hybrid computed and tracker options
+      if(!options.meteor) {
+        options.meteor = {};
+      }
+      if(!options.computed) {
+        options.computed = {};
+      }
+      for(const k in map) {
+        let option = map[k];
+        let result = option;
+        if(option.get || option.set) {
+          options.computed[k] = result;
+        } else {
+          if(typeof result === 'function') {
+            result = function() {
+              return option.bind(this.state)();
+            };
+          }
+          options.meteor[k] = result;
+        }
       }
     },
     events(map) {
-      // TODO
+      // TODO events
       for(const k in map) {
         const index = k.indexOf(' ');
         const event = k.substr(0, index);
         const selector = k.substr(index + 1);
-        console.log('event', event, 'selector', selector);
       }
+      console.warn('Template.<name>.events() is not implemented yet.');
     },
     methods(map) {
       for(const k in map) {
@@ -81,14 +120,9 @@ Blaze.registerTemplate = function(name, def) {
         };
       }
     },
-    componentDefinition: options,
   };
 
   Meteor.startup(() => {
     Vue.component(name, options);
   });
 };
-
-Meteor.startup(() => {
-  Vue.config.meteor.freeze = true;
-});

@@ -8,6 +8,9 @@
   <!-- Template inclusion -->
   {{> hello}}
   {{> info}}
+
+  <h2>Vue-powered Blaze demos</h2>
+
   <!-- Custom tags -->
   <message></message>
   <condition></condition>
@@ -34,6 +37,7 @@
   <!-- Directives with two-way data-binding ('$model') -->
   <input $model="msg" placeholder="Enter a message" />
   <h3>{{ msg }}</h3>
+  <p>{{{ htmlMsg }}}</p>
 </template>
 
 <template name="condition">
@@ -49,14 +53,24 @@
 
 <template name="todos">
   <div class="todos">
+    <h2>Todos</h2>
     <!-- Advanced event listeners with modifiers -->
     <input $model="newTxt" placeholder="Enter new task" @keyup.enter="addTask" />
-    <ul>
+
+    <button @click="showDone = !showDone">{{showDone ? 'Hide done' : 'Show done'}}</button>
+
+    <div class="tasks">
       <!-- Loop -->
       {{#each tasks}}
-      <!-- Calling template methods with arguments from event listeners -->
-      <li>{{task.text}} <button @click="removeTask(task._id)">x</button></li>
+
+      <!-- Class binding -->
+      <div class="task" :class="{ done: task.done }">
+        <!-- Calling template methods with arguments from event listeners -->
+        <input type="checkbox" checked="{{task.done}}" @click="setDone(task._id, !task.done)" />
+        <span class="text">{{task.text}}</span>
+        <button @click="removeTask(task._id)">x</button>
+      </div>
       {{/each}}
-    </ul>
+    </div>
   </div>
 </template>

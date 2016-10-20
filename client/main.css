@@ -2,3 +2,23 @@
 .todos {
   margin: 12px;
 }
+
+.task {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 4px 0;
+  max-width: 256px;
+}
+
+.task.done {
+  opacity: 0.5;
+}
+
+.task .text {
+  flex: auto 1 1;
+}
+
+.task.done .text {
+  text-decoration: line-through;
+}

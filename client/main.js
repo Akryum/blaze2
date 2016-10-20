@@ -21,6 +21,7 @@ Template.hello.methods({
   },
 });
 
+// Not working yet
 Template.hello.events({
   'click button'(event, instance) {
     // increment the counter when button is clicked
@@ -31,13 +32,14 @@ Template.hello.events({
 
 Template.message.onCreated(function() {
   // Local reactive data
-  this.defineData({
+  this.defineState({
     msg: 'Hello world!',
+    htmlMsg: '<b>Bold</b> <i>Italic</i>',
   });
 });
 
 Template.condition.onCreated(function() {
-  this.defineData({
+  this.defineState({
     show: false,
   });
 });
@@ -45,14 +47,28 @@ Template.condition.onCreated(function() {
 // Todos
 
 Template.todos.onCreated(function() {
-  this.defineData({
+  this.defineState({
     newTxt: '',
+    showDone: true,
   });
+});
+
+// Easy subscriptions
+Template.todos.subscribe({
+  tasks() {
+    return [this.$state.showDone];
+  },
 });
 
 Template.todos.helpers({
   tasks() {
-    return Tasks.find({}, { sort: {date:-1} });
+    return Tasks.find({
+      // Not working yet
+      // Need hybrid watching Vue/Tracker
+      // $or: [{done: false}, {done:this.$state.showDone}],
+    }, {
+      sort: {date:-1},
+    });
   },
 });
 
@@ -60,17 +76,17 @@ Template.todos.methods({
   addTask() {
     console.log(this);
     // Access local reactive data
-    if(this.$data.newTxt.length !== 0) {
+    if(this.$state.newTxt.length !== 0) {
       // Business
-      Tasks.insert({
-        text: this.$data.newTxt,
-        date: new Date(),
-      });
+      Meteor.call('addTask', this.$state.newTxt);
       // Clear the input
-      this.$data.newTxt = '';
+      this.$state.newTxt = '';
     }
   },
+  setDone(_id, done) {
+    Meteor.call('setTaskDone', _id, done);
+  },
   removeTask(_id) {
-    Tasks.remove(_id);
+    Meteor.call('removeTask', _id);
   },
 });
