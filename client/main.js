@@ -25,11 +25,11 @@ Template.hello.methods({
   },
 });
 
-// Not working yet
+// Blaze events
 Template.hello.events({
   'click button'(event, instance) {
     // increment the counter when button is clicked
-    this.incrementCounter();
+    instance.incrementCounter();
   },
 });
 
@@ -50,6 +50,18 @@ Template.condition.onCreated(function() {
 
 Template.destroyable.onDestroyed(function() {
   console.log('destroyed');
+});
+
+Template.destroyable.events({
+  'click'() {
+    console.log('click');
+  },
+  'dblclick'() {
+    console.log('dblclick');
+  },
+  'mouseenter,mouseleave'() {
+    console.log('mouse');
+  },
 });
 
 // Todos

@@ -1,8 +1,9 @@
-console.warn('This package is experimental. Use at your own risks.');
+console.warn('[blaze2] This package is experimental. Use at your own risks.');
 
 import { Meteor } from 'meteor/meteor';
 import Vue from 'vue';
 import VueMeteor from 'vue-meteor-tracker';
+import './unique-id';
 
 // Meteor tracker for Vue
 Vue.use(VueMeteor, {
@@ -24,8 +25,8 @@ function overrideHookForTemplate(base, name, callback, options = {}) {
 
     // Object binded to callback 'this'
     let bindTo;
-    if(!options.bindComponent && this._state) {
-      bindTo = this._state;
+    if(!options.bindComponent && this._template) {
+      bindTo = this._template;
     } else {
       bindTo = this;
     }
@@ -51,15 +52,73 @@ Vue.prototype.defineReactive = function(map) {
   }
 };
 
+// Events handling in vue component
+function initBlazeEvents() {
+  if(this.$options._events) {
+    this._blazeEventHandlers = {};
+  }
+}
+function updateBlazeEvents() {
+  if(this.$options._events) {
+    this.$nextTick(() => {
+      for(const option of this.$options._events) {
+        // Callback
+        const callback = (event) => {
+          // TODO data context
+          console.warn(`[blaze2] Inside events map, 'this' (the data context) is not implemented.`);
+          option.callback.bind(null)(event, this._template);
+        }
+
+        // DOM elements selector
+        let els;
+        if(!option.selector) {
+          els = [this.$el];
+        } else {
+          els = this.$el.querySelectorAll(option.selector);
+        }
+
+        // Events
+        const events = option.event.split(',');
+        for(const event of events) {
+
+          let cache = this._blazeEventHandlers[event];
+          if(!cache) {
+            cache = this._blazeEventHandlers[event] = {};
+          }
+
+          // Matched DOM elements
+          for(const el of els) {
+            const uid = el.uniqueID;
+            if(!cache[uid]) {
+              el.addEventListener(event, callback);
+              cache[uid] = true;
+
+              // Clean event listener if DOM element destroyed
+              el.addEventListener('DOMNodeRemoved', e => {
+                el.removeEventListener(event, callback);
+              });
+            }
+          }
+        }
+      }
+    });
+  }
+}
+const BlazeEventsMixin = {
+  beforeCreate: initBlazeEvents,
+  mounted: updateBlazeEvents,
+  updated: updateBlazeEvents,
+}
+Vue.mixin(BlazeEventsMixin);
+
 // Override vue instanciation
 const _init = Vue.prototype._init;
 Vue.prototype._init = function(options) {
 
   // Private object that will be binded to Blaze callbacks
-  this._state = {
+  this._template = {
     $state: this,
     defineState: this.defineReactive.bind(this),
-    ...options.methods,
   };
 
   _init.bind(this)(options);
@@ -81,6 +140,15 @@ Blaze.registerRootComponent = function(options) {
 // Register a Blaze template
 Blaze.registerTemplate = function(name, def) {
   const options = def.options;
+
+  options.beforeCreate = function() {
+    if(options.methods) {
+      const template = this._template || this;
+      for(const k in options.methods) {
+        template[k] = options.methods[k];
+      }
+    }
+  }
 
   Template[name] = {
     name,
@@ -116,7 +184,7 @@ Blaze.registerTemplate = function(name, def) {
         let result = option;
         if(typeof result === 'function') {
           result = function() {
-            return option.bind(this._state)();
+            return option.bind(this._template || this)();
           };
         }
         options.meteor.subscribe[k] = result;
@@ -138,7 +206,7 @@ Blaze.registerTemplate = function(name, def) {
         } else {
           if(typeof result === 'function') {
             result = function() {
-              return option.bind(this._state)();
+              return option.bind(this._template || this)();
             };
           }
           options.meteor[k] = result;
@@ -147,12 +215,27 @@ Blaze.registerTemplate = function(name, def) {
     },
     events(map) {
       // TODO events
-      for(const k in map) {
-        const index = k.indexOf(' ');
-        const event = k.substr(0, index);
-        const selector = k.substr(index + 1);
+      if(!options._events) {
+        options._events = [];
       }
-      console.warn('Template.<name>.events() is not implemented yet.');
+
+      for(const k in map) {
+        let event, selector;
+        const index = k.indexOf(' ');
+        if(index === -1) {
+          event = k;
+          selector = null;
+        } else {
+          event = k.substr(0, index);
+          selector = k.substr(index + 1);
+        }
+        const callback = map[k];
+        options._events.push({
+          event,
+          selector,
+          callback,
+        });
+      }
     },
     methods(map) {
       for(const k in map) {
@@ -160,7 +243,7 @@ Blaze.registerTemplate = function(name, def) {
           options.methods = {};
         }
         options.methods[k] = function(...args) {
-          return map[k].bind(this._state)(...args);
+          return map[k].bind(this._template || this)(...args);
         };
       }
     },
