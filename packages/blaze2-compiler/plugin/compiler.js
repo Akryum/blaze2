@@ -157,8 +157,10 @@ class VueHtmlTagHandler {
   generateBodyJS(renderFuncCode) {
     var js = `
     Blaze.registerRootComponent({
-      render: ${toFunction(renderFuncCode.render)},
-      staticRenderFns: [${renderFuncCode.staticRenderFns.map(toFunction).join(',')}],
+      options: {
+        render: ${toFunction(renderFuncCode.render)},
+        staticRenderFns: [${renderFuncCode.staticRenderFns.map(toFunction).join(',')}],
+      },
     });
     `;
     return js;

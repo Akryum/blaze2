@@ -117,28 +117,40 @@ Vue.prototype._init = function(options) {
 
   // Private object that will be binded to Blaze callbacks
   this._template = {
+    // New API
     $state: this,
     defineState: this.defineReactive.bind(this),
+    // Blaze template API
+    findAll: (selector) => {
+      return this.$el.querySelectorAll(selector);
+    },
+    find: (selector) => {
+      return this.$el.querySelector(selector);
+    },
+    get firstNode() {
+      return this.$el.firstChild;
+    },
+    get lastNode() {
+      return this.$el.lastChild;
+    },
+    get data() {
+      console.warn('[blaze2] data context is not implemented yet');
+      return this;
+    },
+    autorun: () => {
+      return this.$autorun.apply(this, arguments);
+    },
+    subscribe: () => {
+      return this.$subscribe.apply(this, arguments);
+    },
+    view: this,
   };
 
   _init.bind(this)(options);
 };
 
-// Add the root Vue component to the page
-// (after Meteor startup and one tick later)
-Blaze.registerRootComponent = function(options) {
-  Meteor.startup(() => {
-    Meteor.defer(() => {
-      const div = document.createElement('div');
-      div.setAttribute('id', 'app');
-      document.body.appendChild(div);
-      new Vue(options).$mount('#app');
-    });
-  });
-};
-
 // Register a Blaze template
-Blaze.registerTemplate = function(name, def) {
+Blaze.registerTemplate = function(name, def, register = true) {
   const options = def.options;
 
   options.beforeCreate = function() {
@@ -249,7 +261,38 @@ Blaze.registerTemplate = function(name, def) {
     },
   };
 
+  if(register) {
+    Meteor.startup(() => {
+      Vue.component(name, options);
+    });
+  }
+
+  return options;
+};
+
+// Add the root Vue component to the page
+// (after Meteor startup and one tick later)
+Blaze.registerRootComponent = function(def) {
   Meteor.startup(() => {
-    Vue.component(name, options);
+    Meteor.defer(() => {
+      const div = document.createElement('div');
+      div.setAttribute('id', 'app');
+      document.body.appendChild(div);
+
+      const options = Blaze.registerTemplate('body', def, false);
+      new Vue(options).$mount('#app');
+    });
   });
+};
+
+Template.instance = function() {
+  console.warn('[blaze2] Template.instance is not implemented yet.');
+};
+
+Template.currentData = function() {
+  console.warn('[blaze2] Template.currentData is not implemented yet.');
+};
+
+Template.parentData = function(numLevels = 1) {
+  console.warn('[blaze2] Template.parentData is not implemented yet.');
 };
